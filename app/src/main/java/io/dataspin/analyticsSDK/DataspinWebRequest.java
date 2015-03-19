@@ -16,28 +16,28 @@ public class DataspinWebRequest extends AsyncTask<DataspinConnection, Void, Stri
     protected String doInBackground(DataspinConnection... params) {
         HttpClient httpClient = new DefaultHttpClient();
         try {
-            if(params[0].get == null) {
+            if(params[0].get == null) { //POST Request
                 HttpResponse response = httpClient.execute(params[0].post);
                 params[0].response = EntityUtils.toString(response.getEntity());
-                if (response.getStatusLine().getStatusCode() == 200) params[0].error = null;
-                else {
-                    params[0].error = Integer.toString(response.getStatusLine().getStatusCode()) + response.getStatusLine().getReasonPhrase();
+                if (response.getStatusLine().getStatusCode() != 200) {
+                    //TODO: print error and put on backlog
+                    //params[0].error = Integer.toString(response.getStatusLine().getStatusCode()) + response.getStatusLine().getReasonPhrase();
                     Log.w("DataspinAsyncTask", "Couldn't execute request! Error: " + params[0]);
                 }
             }
             else {
                 HttpResponse response = httpClient.execute(params[0].get);
                 params[0].response = EntityUtils.toString(response.getEntity());
-                if (response.getStatusLine().getStatusCode() == 200) params[0].error = null;
-                else {
-                    params[0].error = Integer.toString(response.getStatusLine().getStatusCode()) + response.getStatusLine().getReasonPhrase();
+                if (response.getStatusLine().getStatusCode() != 200) {
+                    //params[0].error = Integer.toString(response.getStatusLine().getStatusCode()) + response.getStatusLine().getReasonPhrase();
                     Log.w("DataspinAsyncTask","Couldn't execute request! Error: "+params[0]);
                 }
             }
             Log.w("DataspinAsyncTask", "Request success! "+params[0].response);
-            //DataspinUnityHelper.GetInstance().OnRequestExecuted(params[0]);
+            DataspinManager.Instance().OnRequestExecuted(params[0]);
         }
         catch(Exception e) {
+            //TODO: print error and put on backlog
             Log.w("DataspinAsyncTask", "Couldn't execute request! Error: " + e.getMessage());
             e.printStackTrace();
         }
@@ -46,6 +46,6 @@ public class DataspinWebRequest extends AsyncTask<DataspinConnection, Void, Stri
 
     @Override
     protected void onPostExecute(String result) {
-
+        //Do nothing here actually
     }
 }

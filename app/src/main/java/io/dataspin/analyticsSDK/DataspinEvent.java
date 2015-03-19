@@ -1,5 +1,7 @@
 package io.dataspin.analyticsSDK;
 
+import org.json.JSONObject;
+
 import java.util.Dictionary;
 
 /**
@@ -9,13 +11,13 @@ public class DataspinEvent {
     public String name;
     public String id;
 
-    public DataspinEvent(Dictionary<String, Object> eventDict) {
+    public DataspinEvent(JSONObject eventDict) {
         try {
             this.id = (String) eventDict.get("slug");
             this.name = (String) eventDict.get("name");
         }
         catch(Exception e) {
-            //DataspinManager.Instance.AddError(DataspinError.ErrorTypeEnum.JSON_PROCESSING_ERROR, "Failed to create new DataspinCustomEvent. ", e.StackTrace);
+            DataspinManager.Instance().AddError(new DataspinError(ErrorType.JSON_PROCESSING_ERROR, "Failed to create new DataspinCustomEvent. ", e));
         }
     }
 
