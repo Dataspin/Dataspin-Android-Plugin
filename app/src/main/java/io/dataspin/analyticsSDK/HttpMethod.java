@@ -7,7 +7,7 @@ public enum HttpMethod {
     POST (0),
     GET (1);
 
-    private final int methodCode;
+    public final int methodCode;
 
     private HttpMethod(int methodCode) {
         this.methodCode = methodCode;

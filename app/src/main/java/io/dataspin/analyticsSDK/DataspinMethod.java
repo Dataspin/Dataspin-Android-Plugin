@@ -15,7 +15,7 @@ public enum DataspinMethod {
     REGISTER_OLD_SESSION (8)
     ;
 
-    private final int methodCode;
+    public final int methodCode;
 
     private DataspinMethod(int methodCode) {
         this.methodCode = methodCode;
