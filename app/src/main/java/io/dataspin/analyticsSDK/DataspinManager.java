@@ -198,8 +198,8 @@ public class DataspinManager {
         try {
             paramsJson.put("end_user_device", this.device_uuid);
             paramsJson.put("app_version", this.AppVersion);
-            paramsJson.put("connectivity_type", GetConnectivityType());
             paramsJson.put("carrier_name", GetCarrier());
+            paramsJson.put("connectivity_type", GetConnectivityType());
         } catch (Exception e) {
             AddError(new DataspinError(ErrorType.REQUEST_CREATION_ERROR, "Couldn't create paramsJson while creating RegisterDevice query.", e));
         }
@@ -222,22 +222,26 @@ public class DataspinManager {
     public void StartOfflineSession() {
         JSONObject paramsJson = new JSONObject();
         Random r = new Random();
-        start_timestamp = (int) System.currentTimeMillis() / 1000;
-        offline_session_id = String.valueOf(r.nextInt() * -1);
-        Log.i(logTag, "Starting offline session with id: " + this.offline_session_id+", Start: "+String.valueOf(start_timestamp));
+        start_timestamp = (int) (System.currentTimeMillis() / 1000);
+        Log.i(logTag, "Start timestamp: "+start_timestamp);
+        offline_session_id = String.valueOf(r.nextInt());
 
         try {
             paramsJson.put("end_user_device", this.device_uuid);
             paramsJson.put("app_version", this.AppVersion);
-            paramsJson.put("connectivity_type", GetConnectivityType());
-            paramsJson.put("carrier_name", GetCarrier());
             paramsJson.put("session_id", offline_session_id);
             paramsJson.put("start_timestamp", start_timestamp);
             paramsJson.put("end_timestamp", start_timestamp + 60);
+            paramsJson.put("carrier_name", GetCarrier());
+            paramsJson.put("connectivity_type", GetConnectivityType());
         }
         catch (Exception e) {
-
+            Log.e(logTag, "Failed to create register_old_session json! "+e.getMessage());
+            e.printStackTrace();
         }
+
+        Log.i(logTag, "Starting offline session with json: " + paramsJson);
+
         if(_backlog == null) _backlog = new DataspinBacklog(context);
         _backlog.AddTask(new DataspinConnection(DataspinMethod.REGISTER_OLD_SESSION, HttpMethod.POST, paramsJson));
 
@@ -420,7 +424,7 @@ public class DataspinManager {
                     break;
 
                 case START_SESSION:
-                    this.session_id = String.valueOf((int) responseJson.get("id"));
+                    this.session_id = String.valueOf(responseJson.getInt("id"));
                     isSessionStarted = true;
                     if (listener != null)
                         listener.OnSessionStarted();
@@ -437,6 +441,8 @@ public class DataspinManager {
 
                 case END_SESSION:
                     isSessionStarted = false;
+                    session_id = null;
+
                     if(listener != null)
                         listener.OnSessionEnded();
                     break;
@@ -512,6 +518,7 @@ public class DataspinManager {
                 try {
                     conn.json.put("dt", (int) System.currentTimeMillis() / 1000 - conn.json.getInt("start_timestamp"));
                     conn.json.put("length", conn.json.getInt("end_timestamp") - conn.json.getInt("start_timestamp"));
+                    conn.UpdatePost();
                 }
                 catch (Exception e) {
                     Log.e(logTag, "Unable to calculate OfflineSession dt and length");

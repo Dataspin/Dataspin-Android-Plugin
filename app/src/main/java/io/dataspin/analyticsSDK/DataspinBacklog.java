@@ -74,7 +74,7 @@ public class DataspinBacklog extends SQLiteOpenHelper {
     }
 
     public void AddTask(DataspinConnection task) {
-        Log.i("DataspinBacklog", "Adding new task on backlog...");
+        Log.i("DataspinBacklog", "Adding new task on backlog: "+task.toString());
         try {
             SQLiteDatabase db = this.getWritableDatabase();
             task.json.put("session_id", (DataspinManager.Instance().isSessionStarted == true) ?
