@@ -5,6 +5,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.os.Handler;
 import android.provider.BaseColumns;
 import android.provider.ContactsContract;
 import android.util.Log;
@@ -73,25 +74,51 @@ public class DataspinBacklog extends SQLiteOpenHelper {
     }
 
     public void AddTask(DataspinConnection task) {
-        SQLiteDatabase db = this.getWritableDatabase();
+        Log.i("DataspinBacklog", "Adding new task on backlog...");
         try {
+            SQLiteDatabase db = this.getWritableDatabase();
             task.json.put("session_id", (DataspinManager.Instance().isSessionStarted == true) ?
                     DataspinManager.Instance().session_id :
                     DataspinManager.Instance().offline_session_id);
+
+            ContentValues values = new ContentValues();
+            values.put(DataspinTaskContract.COLUMN_NAME_URL, task.url);
+            values.put(DataspinTaskContract.COLUMN_NAME_JSON, task.json.toString());
+            values.put(DataspinTaskContract.COLUMN_NAME_DATASPIN_METHOD, task.dataspinMethod.methodCode);
+            values.put(DataspinTaskContract.COLUMN_NAME_HTTP_METHOD, task.httpMethod.methodCode);
+
+            // Inserting Row
+            db.insert(DataspinTaskContract.TABLE_NAME, null, values);
+            db.close(); // Closing database connection
+
+            Log.i("DataspinBacklog", "Task added!");
         }
         catch(Exception e) {
-            Log.w("DataspinBacklog", "Error while writing Offline Session Id! Message: "+e.getMessage());
+            Log.w("DataspinBacklog", "Error while writing Offline request! Message: "+e.getMessage());
+            e.printStackTrace();
         }
+    }
 
-        ContentValues values = new ContentValues();
-        values.put(DataspinTaskContract.COLUMN_NAME_URL, task.url);
-        values.put(DataspinTaskContract.COLUMN_NAME_JSON, task.json.toString());
-        values.put(DataspinTaskContract.COLUMN_NAME_DATASPIN_METHOD, task.dataspinMethod.methodCode);
-        values.put(DataspinTaskContract.COLUMN_NAME_HTTP_METHOD, task.httpMethod.methodCode);
+    private void UpdateSessionTaskTime() {
+        final Handler mHandler = new Handler();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (true) {
+                    try {
+                        Thread.sleep(10000);
+                        mHandler.post(new Runnable() {
+                            @Override
+                            public void run() {
 
-        // Inserting Row
-        db.insert(DataspinTaskContract.TABLE_NAME, null, values);
-        db.close(); // Closing database connection
+                            }
+                        });
+                    } catch (Exception e) {
+                        // TODO: handle exception
+                    }
+                }
+            }
+        }).start();
     }
 
     public void DeleteTask(DataspinBacklogTask task) {
@@ -138,6 +165,7 @@ public class DataspinBacklog extends SQLiteOpenHelper {
     }
 
     public LinkedList<DataspinConnection> GetAllTasks() {
+        Log.i("DataspinBacklog","Getting tasks list...");
         LinkedList<DataspinConnection> taskList = new LinkedList<DataspinConnection>();
 
         String selectQuery = "SELECT  * FROM " + DataspinTaskContract.TABLE_NAME;
@@ -163,7 +191,7 @@ public class DataspinBacklog extends SQLiteOpenHelper {
 
             } while (cursor.moveToNext());
         }
-
+        Log.i("DataspinBacklog","Tasks retrieved!");
         return taskList;
     }
 }

@@ -224,6 +224,8 @@ public class DataspinManager {
         Random r = new Random();
         start_timestamp = (int) System.currentTimeMillis() / 1000;
         offline_session_id = String.valueOf(r.nextInt() * -1);
+        Log.i(logTag, "Starting offline session with id: " + this.offline_session_id+", Start: "+String.valueOf(start_timestamp));
+
         try {
             paramsJson.put("end_user_device", this.device_uuid);
             paramsJson.put("app_version", this.AppVersion);
@@ -236,7 +238,20 @@ public class DataspinManager {
         catch (Exception e) {
 
         }
+        if(_backlog == null) _backlog = new DataspinBacklog(context);
         _backlog.AddTask(new DataspinConnection(DataspinMethod.REGISTER_OLD_SESSION, HttpMethod.POST, paramsJson));
+
+        isSessionStarted = true;
+
+        Handler mainHandler = new Handler(context.getMainLooper());
+
+        Runnable myRunnable = new Runnable() {
+            @Override
+            public void run() {
+                if(listener != null) listener.OnSessionStarted();
+            }};
+
+        mainHandler.post(myRunnable);
     }
 
     public void EndSession() {
@@ -284,7 +299,6 @@ public class DataspinManager {
             ExecuteConnection(conn);
         }
         else {
-            _backlog.AddTask(conn);
             AddError(new DataspinError(ErrorType.SESSION_NOT_STARTED, "Couldn't Register event because session wasn't started! Call StartSession first!"));
         }
     }
@@ -314,7 +328,6 @@ public class DataspinManager {
             ExecuteConnection(conn);
         }
         else {
-            _backlog.AddTask(conn);
             AddError(new DataspinError(ErrorType.SESSION_NOT_STARTED, "Couldn't Purchase item because session wasn't started! Call StartSession first!"));
         }
     }
@@ -350,6 +363,15 @@ public class DataspinManager {
         }
         else {
             AddError(new DataspinError(ErrorType.SESSION_NOT_STARTED, "Couldn't get events because session wasn't started! Call StartSession first!"));
+        }
+    }
+
+    public void GetAllTasks() {
+        if(_backlog == null) _backlog = new DataspinBacklog(context);
+        BacklogTasks = _backlog.GetAllTasks();
+        Log.i(logTag, "BacklogTasks length: "+BacklogTasks.size());
+        for(int i = 0; i < BacklogTasks.size(); i++) {
+            Log.i(logTag, "Backlog task: "+BacklogTasks.get(i));
         }
     }
 
@@ -404,8 +426,9 @@ public class DataspinManager {
                         listener.OnSessionStarted();
 
                     Log.d(logTag, "Session started! ID: " + this.session_id);
-                    _backlog = new DataspinBacklog(context);
+                    if(_backlog == null)_backlog = new DataspinBacklog(context);
                     BacklogTasks = _backlog.GetAllTasks();
+                    ExecuteNextTaskFromBacklog();
                     break;
 
                 case REGISTER_OLD_SESSION:
@@ -483,8 +506,16 @@ public class DataspinManager {
 
     private void ExecuteNextTaskFromBacklog() {
         boolean isSessionFound;
+        Log.i(logTag,"Executing next task from queue...");
         for(DataspinConnection conn : BacklogTasks) {
             if(conn.dataspinMethod == DataspinMethod.REGISTER_OLD_SESSION) {
+                try {
+                    conn.json.put("dt", (int) System.currentTimeMillis() / 1000 - conn.json.getInt("start_timestamp"));
+                    conn.json.put("length", conn.json.getInt("end_timestamp") - conn.json.getInt("start_timestamp"));
+                }
+                catch (Exception e) {
+                    Log.e(logTag, "Unable to calculate OfflineSession dt and length");
+                }
                 ExecuteConnection(conn);
                 _backlog.DeleteTask(conn.backlogTaskId);
                 BacklogTasks.remove(conn);
@@ -496,6 +527,7 @@ public class DataspinManager {
             ExecuteConnection(conn);
             _backlog.DeleteTask(conn.backlogTaskId);
             BacklogTasks.remove(conn);
+            return;
         }
     }
 
