@@ -1,5 +1,7 @@
 package io.dataspin.analyticsSDK;
 
+import android.util.Log;
+
 import org.json.JSONObject;
 
 import java.util.Date;
@@ -26,6 +28,8 @@ public class DataspinItem {
             is_coinpack = (boolean) json.get("is_coinpack");
             parameters = (String) json.get("parameters");
             internal_id = (String) json.get("internal_id");
+
+            Log.i("DataspinItem", "New item added to storage! " + this.toString());
         }
         catch(Exception e) {
             DataspinManager.Instance().AddError(new DataspinError(ErrorType.JSON_PROCESSING_ERROR, "Couldn't create DataspinItem Details: " + e.getMessage(), e));

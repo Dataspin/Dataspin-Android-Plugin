@@ -448,7 +448,7 @@ public class DataspinManager {
                     break;
 
                 case PURCHASE_ITEM:
-                    DataspinItem item = FindItemById((String) responseJson.get("item"));
+                    DataspinItem item = FindItemById((String) responseJson.get("internal_id"));
                     if(listener != null) {
                         if(item != null) listener.OnItemPurchased(item);
                     }
@@ -548,16 +548,18 @@ public class DataspinManager {
     public DataspinItem FindItemByName(String name) {
         if(AvailableItems != null)
             for(DataspinItem item : AvailableItems) {
-                if(item.long_name == name) return item;
-            }
+                if(item.long_name.equals(name)) return item;
+        }
+        Log.w(logTag, "Item with id = "+name+" not found!");
         return null;
     }
 
     public DataspinItem FindItemById(String id) {
         if(AvailableItems != null)
             for(DataspinItem item : AvailableItems) {
-                if(item.internal_id == id) return item;
+                if(item.internal_id.equals(id)) return item;
             }
+        Log.w(logTag, "Item with id = "+id+" not found!");
         return null;
     }
 
