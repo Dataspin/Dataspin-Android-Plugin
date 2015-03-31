@@ -516,7 +516,7 @@ public class DataspinManager {
         for(DataspinConnection conn : BacklogTasks) {
             if(conn.dataspinMethod == DataspinMethod.REGISTER_OLD_SESSION) {
                 try {
-                    conn.json.put("dt", (int) System.currentTimeMillis() / 1000 - conn.json.getInt("start_timestamp"));
+                    conn.json.put("dt", ((int) (System.currentTimeMillis() / 1000)) - conn.json.getInt("start_timestamp"));
                     conn.json.put("length", conn.json.getInt("end_timestamp") - conn.json.getInt("start_timestamp"));
                     conn.UpdatePost();
                 }
