@@ -100,6 +100,7 @@ public class DataspinManager {
     public String session_id;
     private String ad_id;
     private Context context;
+    private int lastActivityTimestamp;
 
     public ArrayList<DataspinError> Errors;
     public LinkedList<DataspinConnection> BacklogTasks;
@@ -600,6 +601,24 @@ public class DataspinManager {
         }
 
         return null;
+    }
+
+    public int GetTimestamp() {
+        return (int) (System.currentTimeMillis() / 1000);
+    }
+
+    public boolean CheckSessionValidity() {
+        if(lastActivityTimestamp + 60 > GetTimestamp()) {
+            lastActivityTimestamp = GetTimestamp(); // Update session last activity timestamp
+            return true;
+        }
+        else {
+            LogInfo("Idle for more than 60 sec, Invalidating session!");
+            isSessionStarted = false;
+            session_id = "-1";
+            StartSession();
+            return false;
+        }
     }
 
     private String GetUserUUID() {
