@@ -34,7 +34,7 @@ import java.util.Random;
 
 public class DataspinManager {
 
-    public final String PluginVersion = "0.01";
+    public final String PluginVersion = "0.2";
     public final String ApiVersion = "v1";
     public final String BaseURL = "http://%s.dataspin.io/api/%s/%s/";
 
