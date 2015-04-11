@@ -130,7 +130,7 @@ public class DataspinManager {
 
                 JSONObject paramsJson = new JSONObject();
                 try {
-                    paramsJson.put("device_id", GetDeviceID());
+                    paramsJson.put("device_uuid", GetDeviceID());
                     paramsJson.put("name", name);
                     paramsJson.put("surname", surname);
                     paramsJson.put("email", email == null ? GetMail() : email);
