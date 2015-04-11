@@ -34,9 +34,9 @@ import java.util.Random;
 
 public class DataspinManager {
 
-    public final String PluginVersion = "0.2";
+    public final String PluginVersion = "0.21";
     public final String ApiVersion = "v1";
-    public final String BaseURL = "http://%s.dataspin.io/api/%s/%s/";
+    public final String BaseURL = "http://%s.dataspin.io:8000/api/%s/%s/";
 
     public static String logTag = "DataspinManager";
 
@@ -130,6 +130,7 @@ public class DataspinManager {
 
                 JSONObject paramsJson = new JSONObject();
                 try {
+                    paramsJson.put("device_id", GetDeviceID());
                     paramsJson.put("name", name);
                     paramsJson.put("surname", surname);
                     paramsJson.put("email", email == null ? GetMail() : email);
