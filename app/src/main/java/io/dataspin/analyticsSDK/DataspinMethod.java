@@ -12,7 +12,8 @@ public enum DataspinMethod {
     GET_ITEMS (5),
     GET_EVENTS (6),
     END_SESSION (7),
-    REGISTER_OLD_SESSION (8)
+    REGISTER_OLD_SESSION (8),
+    ALIVE_PING (9),
     ;
 
     public final int methodCode;

@@ -36,7 +36,7 @@ public class DataspinManager {
 
     public final String PluginVersion = "0.21";
     public final String ApiVersion = "v1";
-    public final String BaseURL = "http://%s.dataspin.io:8000/api/%s/%s/";
+    public final String BaseURL = "http://%s.dataspin.io/api/%s/%s/";
 
     public static String logTag = "DataspinManager";
 
@@ -60,12 +60,12 @@ public class DataspinManager {
         return _instance;
     }
 
-
     // Setup functions and variables
     public String APIKey = "";
     public String ClientName = "";
     public String AppVersion = "";
     public boolean IsDebug;
+    public long sessionTimeout = 60;
 
     public void SetApiKey(String clientName, String APIKey, String appVersion, boolean isDebug, final Context context) {
         this.ClientName = clientName;
@@ -121,6 +121,16 @@ public class DataspinManager {
     public void setOnEventListener(IDataspinListener listener) {
         this.listener = listener;
     }
+
+    //Ping Runnable
+    public Runnable AlivePingRunnable = new Runnable() {
+        @Override
+        public void run() {
+            AlivePing();
+        }
+    };
+
+    private Handler alivePingHandler;
 
     // Requests
     public void RegisterUser(String name, String surname, String email, String google_plus_id, String facebook_id) {
@@ -183,7 +193,7 @@ public class DataspinManager {
                 this.device_uuid = GetDeviceUUID();
                 isDeviceRegistered = true;
 
-                Log.i(logTag,"Device already registered!");
+                Log.i(logTag, "Device already registered!");
 
                 if (listener != null)
                     listener.OnDeviceRegistered();
@@ -203,9 +213,8 @@ public class DataspinManager {
             paramsJson.put("carrier_name", GetCarrier());
             paramsJson.put("connectivity_type", GetConnectivityType());
         } catch (Exception e) {
-            AddError(new DataspinError(ErrorType.REQUEST_CREATION_ERROR, "Couldn't create paramsJson while creating RegisterDevice query.", e));
+            AddError(new DataspinError(ErrorType.REQUEST_CREATION_ERROR, "Couldn't create paramsJson while creating StartSession query.", e));
         }
-
 
         if(isDeviceRegistered) {
             if(!isSessionStarted) {
@@ -218,6 +227,32 @@ public class DataspinManager {
         else {
             StartOfflineSession();
             AddError(new DataspinError(ErrorType.DEVICE_NOT_REGISTERED, "Couldn't start session because device wasn't registered! Call RegisterDevice first!"));
+        }
+    }
+
+    //Alive Ping
+    private void CreateAlivePingHandler() {
+        if(alivePingHandler != null) alivePingHandler.removeCallbacks(AlivePingRunnable);
+
+        alivePingHandler = new Handler();
+        alivePingHandler.postDelayed(AlivePingRunnable, sessionTimeout * 1000 / 3 * 2);
+    }
+
+    public void AlivePing() {
+        JSONObject paramsJson = new JSONObject();
+        try {
+            paramsJson.put("end_user_device", this.device_uuid);
+            paramsJson.put("app_version", this.AppVersion);
+        } catch (Exception e) {
+            AddError(new DataspinError(ErrorType.REQUEST_CREATION_ERROR, "Couldn't create paramsJson while creating AlivePing query.", e));
+        }
+
+        if(isDeviceRegistered) {
+            if (isSessionStarted) {
+                ExecuteConnection(new DataspinConnection(DataspinMethod.ALIVE_PING, HttpMethod.POST, paramsJson));
+            } else {
+                Log.w(logTag, "Cannot send ping request if session wasn't started first!");
+            }
         }
     }
 
@@ -355,23 +390,6 @@ public class DataspinManager {
         }
     }
 
-    public void GetEvents() {
-
-        if(isSessionStarted) {
-            JSONObject paramsJson = new JSONObject();
-            try {
-                paramsJson.put("app_version", this.AppVersion);
-            }
-            catch(Exception e) {
-            }
-
-            ExecuteConnection(new DataspinConnection(DataspinMethod.GET_EVENTS, HttpMethod.GET, paramsJson));
-        }
-        else {
-            AddError(new DataspinError(ErrorType.SESSION_NOT_STARTED, "Couldn't get events because session wasn't started! Call StartSession first!"));
-        }
-    }
-
     public void GetAllTasks() {
         if(_backlog == null) _backlog = new DataspinBacklog(context);
         BacklogTasks = _backlog.GetAllTasks();
@@ -435,6 +453,7 @@ public class DataspinManager {
                     if(_backlog == null)_backlog = new DataspinBacklog(context);
                     BacklogTasks = _backlog.GetAllTasks();
                     ExecuteNextTaskFromBacklog();
+                    CreateAlivePingHandler();
                     break;
 
                 case REGISTER_OLD_SESSION:
@@ -456,6 +475,7 @@ public class DataspinManager {
                     }
 
                     Log.d(logTag, "Item Purchased! "+item.toString());
+                    CreateAlivePingHandler();
                     break;
 
                 case GET_ITEMS:
@@ -468,6 +488,10 @@ public class DataspinManager {
                         listener.OnItemsListReceived(AvailableItems);
                     }
                     Log.d(logTag, "Items list processed! Length: "+itemsJson.length());
+                    break;
+
+                case ALIVE_PING:
+                    CreateAlivePingHandler();
                     break;
 
                 case GET_EVENTS:
@@ -608,6 +632,7 @@ public class DataspinManager {
         return (int) (System.currentTimeMillis() / 1000);
     }
 
+    @Deprecated
     public boolean CheckSessionValidity() {
         if(lastActivityTimestamp + 60 > GetTimestamp()) {
             lastActivityTimestamp = GetTimestamp(); // Update session last activity timestamp
@@ -760,6 +785,8 @@ public class DataspinManager {
                 return String.format(BaseURL, ClientName, ApiVersion, "end_session");
             case REGISTER_OLD_SESSION:
                 return String.format(BaseURL, ClientName, ApiVersion, "register_old_session");
+            case ALIVE_PING:
+                return String.format(BaseURL, ClientName, ApiVersion, "alive");
 
             default:
                 return null;

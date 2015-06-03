@@ -16,26 +16,27 @@ public class DataspinWebRequest extends AsyncTask<DataspinConnection, Void, Stri
     protected String doInBackground(DataspinConnection... params) {
         HttpClient httpClient = new DefaultHttpClient();
 
-        if( params[0].dataspinMethod == DataspinMethod.START_SESSION ||
-                params[0].dataspinMethod == DataspinMethod.REGISTER_OLD_SESSION ||
-                params[0].dataspinMethod == DataspinMethod.REGISTER_DEVICE ||
-                params[0].dataspinMethod == DataspinMethod.REGISTER_USER ) {
-            //Okay
-        }
-        else {
-            Log.i("DataspinWebRequest", "Request has to be verified... " + params[0].toString());
-
-            if(!DataspinManager.Instance().CheckSessionValidity()) {
-                while(!DataspinManager.Instance().isSessionStarted) {
-                    try {
-                        Thread.sleep(1000);
-                    }
-                    catch(Exception e) {
-                        Log.w("DataspinWebRequest","Failed to suspend thread!");
-                    }
-                }
-            }
-        }
+//        OFFLINE SESSION INVALIDATION DEPRECATED
+//        if( params[0].dataspinMethod == DataspinMethod.START_SESSION ||
+//                params[0].dataspinMethod == DataspinMethod.REGISTER_OLD_SESSION ||
+//                params[0].dataspinMethod == DataspinMethod.REGISTER_DEVICE ||
+//                params[0].dataspinMethod == DataspinMethod.REGISTER_USER ) {
+//            //Okay
+//        }
+//        else {
+//            Log.i("DataspinWebRequest", "Request has to be verified... " + params[0].toString());
+//
+//            if(!DataspinManager.Instance().CheckSessionValidity()) {
+//                while(!DataspinManager.Instance().isSessionStarted) {
+//                    try {
+//                        Thread.sleep(1000);
+//                    }
+//                    catch(Exception e) {
+//                        Log.w("DataspinWebRequest","Failed to suspend thread!");
+//                    }
+//                }
+//            }
+//        }
 
 
         DataspinManager.Instance().LogInfo("Executing request: "+params[0].toString());
